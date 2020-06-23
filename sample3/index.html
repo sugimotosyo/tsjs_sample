@@ -1,0 +1,217 @@
+<html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="tfjs-examples.c3b5157d.css">
+  
+    <style>.negativeWeight {
+        color: #cc0000;
+      }
+  
+      .positiveWeight {
+        color: #00aa00;
+      }
+  
+      #buttons {
+        margin-top: 20px;
+        padding: 5px;
+        
+      }
+      #simple-mlr{
+        background-color: #DD3333;
+      }
+  
+      #nn-mlr-1hidden{
+        background-color: #DD3333;
+      }
+      
+      #nn-mlr-2hidden{
+        background-color: #DD3333;
+      }
+  
+      #oneHidden {
+        border-left: 1px solid #ededed;
+        border-right: 1px solid #ededed;
+      }
+  
+      #linear,
+      #oneHidden,
+      #twoHidden {
+        padding: 5px;
+      }
+      
+      .css-1w9f25i.vega-embed{
+      padding: 0px;
+      }
+  
+          input {
+        width: 75px;
+      }
+  
+      .input-div {
+        padding: 5px;
+        font-family: monospace;
+        font-size: 16px;
+      }
+  
+      .input-label {
+        display: inline-block;
+        width: 160px;
+      }
+  
+      td {
+        padding-left: 5px;
+        padding-right: 5px;
+        padding-bottom: 5px;
+      }
+  
+      #predict-header {
+        font-weight: bold;
+      }
+  
+      .output-div {
+        padding: 5px;
+        padding-top: 20px;
+        font-family: monospace;
+        font-weight: bold;
+      }
+  
+      #evaluate-table {
+        display: inline-block;
+      }
+  
+      #evaluate-table td, #evaluate-table th {
+        font-family: monospace;
+        border: 1px solid #ddd;
+        padding: 8px;
+      }
+      #evaluate-table th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #DD3333;
+        color: white;
+      }
+  
+      .region {
+        border-left: 1px dashed #ccc;
+        margin-bottom: 5px;
+        padding-left: 24px;
+        margin-left: -24px;
+      }
+  
+      .load-save-section {
+        padding-top: 3px;
+        padding-bottom: 3px;
+      }
+  
+      .logit-span {
+        padding-right: 1em;
+      }
+      .correct-prediction {
+        background-color: greenyellow
+      }
+      .wrong-prediction {
+        background-color: red;
+      }</style>
+  <style type="text/css" data-glamor=""></style></head>
+  
+  <body>
+    <div class="tfjs-example-container centered-container">
+      <section class="title-area">
+        <h2>多変量回帰分析</h2>
+        <p class="subtitle">物件価格を様々なモデルで予測してみる</p>
+      </section>
+  
+      <section>
+        <p class="section-head">概要</p>
+        <p>
+          Tensorflow.jsを用いたデモンストレーションをご紹介します。<br>
+          <br>
+          Tensorflow.jsとは、Webアプリケーション上で機械学習の機能を動かすことを可能にしたJavaScriptライブラリのことです。<br>従来のTensorflowは限られた環境でしか使用できませんでしたが、Tensorflow.jsを用いることでWebブラウザ上で予測モデルの構築や分析を行うことが容易になりました。<br>
+          <br>
+          今回は様々な回帰モデルを用いて多変量分析を行います。<br>
+          多変量分析は、複数の要因からなる問題に対して、どの要因がどの程度影響しているか推定することです。<br>
+          今回の例では物件データを用いて、物件の取引価格を推定します。
+          <br>
+        </p>
+        <p> 
+          以下のデモでは、物件の取引価格を予測するために3つのモデルを作成し、それぞれのモデルの精度を比較することができます。<br>
+          また、線形回帰モデルを学習させる場合、物件の取引価格に最も影響を与えている要因を重みの大きさ（絶対値）を基準に、上から順に表示します。
+        </p>
+        <p>
+          出典：<a target="_blank" href="http://www.land.mlit.go.jp/webland/">「不動産取引価格情報（2017年第3四半期）」（国土交通省）</a>
+        </p>
+      </section>
+  
+      <section>
+        <p class="section-head">ステータス</p>
+        <p id="status">データをテンソルに変換完了。<br>ボタンを押すと学習を開始します。</p>
+        <p id="baselineStatus">平均二乗誤差（誤差の基準として使用）: 1.79</p>
+      </section>
+  
+      <section>
+        <p class="section-head">学習経過</p>
+        <div class="with-cols">
+          <div id="linear">
+            <div class="chart"></div>
+            <div class="status"></div>
+            <div id="modelInspectionOutput">
+              <p id="inspectionHeadline"></p>
+              <table id="myTable"></table>
+            </div>
+          </div>
+          <div id="oneHidden">
+            <div class="chart"></div>
+            <div class="status"></div>
+          </div>
+          <div id="twoHidden">
+            <div class="chart"></div>
+            <div class="status"></div>
+          </div>
+        </div>
+  
+        <div id="buttons">
+          <div class="with-cols">
+            <button id="simple-mlr">線形回帰モデル</button>
+            <button id="nn-mlr-1hidden">ニューラルネットワークモデル<br>（隠れ層の数：1）</button>
+            <button id="nn-mlr-2hidden">ニューラルネットワークモデル<br>（隠れ層の数：2）</button>
+          </div>
+        </div>
+  
+      </section>
+      
+          <section>
+        <p class="section-head">予測価格と実際の価格を比較したグラフ</p>
+        <div id="data" style="text-align:center;">
+          <div class="caption"></div>
+          <div class="plot"></div>
+        </div>
+      </section>
+      
+            <section>
+          <p class="section-head">予測結果</p>
+  
+          <div id="evaluate" style="text-align:center;">
+            <table id="evaluate-table">
+  
+              <tbody><tr>
+                <th>物件タイプ</th>
+                <th>延床面積(m²)</th>
+                <th>駅までの徒歩時間（分）</th>
+                <th>建築年</th>
+                <th>市区町村の人口密度<br>(1km²あたり)</th>
+                <th>実際の価格(千万円)</th>
+                <th style="background-color: #DD3333;">予測した価格(千万円)</th>
+              </tr>
+  
+              </tbody><tbody id="evaluate-tbody">
+  
+              </tbody>
+            </table>
+          </div>
+        </section>
+    </div>
+    <script src="tensorflow.js-demo.e8c0f8ac.js"></script>
+  
+
+</body></html>
